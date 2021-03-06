@@ -11,7 +11,6 @@ namespace MovieApp.Web.ViewComponents
     public class GenresViewComponent: ViewComponent
     {
         private readonly MovieContext _context;
-
         public GenresViewComponent(MovieContext context)
         {
             _context = context;

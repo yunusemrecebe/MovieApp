@@ -2,36 +2,23 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MovieApp.Web.Data;
 
 namespace MovieApp.Web.Migrations
 {
     [DbContext(typeof(MovieContext))]
-    partial class MovieContextModelSnapshot : ModelSnapshot
+    [Migration("20210306183518_ManyToManyRelation")]
+    partial class ManyToManyRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .UseIdentityColumns()
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("ProductVersion", "5.0.1");
-
-            modelBuilder.Entity("GenreMovie", b =>
-                {
-                    b.Property<int>("GenresGenreId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MoviesMovieId")
-                        .HasColumnType("int");
-
-                    b.HasKey("GenresGenreId", "MoviesMovieId");
-
-                    b.HasIndex("MoviesMovieId");
-
-                    b.ToTable("GenreMovie");
-                });
 
             modelBuilder.Entity("MovieApp.Web.Entity.Cast", b =>
                 {
@@ -95,8 +82,7 @@ namespace MovieApp.Web.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("GenreId");
 
@@ -111,17 +97,22 @@ namespace MovieApp.Web.Migrations
                         .UseIdentityColumn();
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("GenreId")
+                        .HasColumnType("int");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("MovieId");
+
+                    b.HasIndex("GenreId");
 
                     b.ToTable("Movies");
                 });
@@ -183,21 +174,6 @@ namespace MovieApp.Web.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("GenreMovie", b =>
-                {
-                    b.HasOne("MovieApp.Web.Entity.Genre", null)
-                        .WithMany()
-                        .HasForeignKey("GenresGenreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MovieApp.Web.Entity.Movie", null)
-                        .WithMany()
-                        .HasForeignKey("MoviesMovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("MovieApp.Web.Entity.Cast", b =>
                 {
                     b.HasOne("MovieApp.Web.Entity.Movie", "Movie")
@@ -236,6 +212,17 @@ namespace MovieApp.Web.Migrations
                     b.Navigation("Person");
                 });
 
+            modelBuilder.Entity("MovieApp.Web.Entity.Movie", b =>
+                {
+                    b.HasOne("MovieApp.Web.Entity.Genre", "Genre")
+                        .WithMany("Movies")
+                        .HasForeignKey("GenreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Genre");
+                });
+
             modelBuilder.Entity("MovieApp.Web.Entity.Person", b =>
                 {
                     b.HasOne("MovieApp.Web.Entity.User", "User")
@@ -245,6 +232,11 @@ namespace MovieApp.Web.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MovieApp.Web.Entity.Genre", b =>
+                {
+                    b.Navigation("Movies");
                 });
 
             modelBuilder.Entity("MovieApp.Web.Entity.User", b =>
