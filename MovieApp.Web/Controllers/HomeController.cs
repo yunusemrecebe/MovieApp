@@ -9,7 +9,6 @@ namespace MovieApp.Web.Controllers
     public class HomeController : Controller
     {
         private readonly MovieContext _context;
-
         public HomeController(MovieContext context)
         {
             _context = context;

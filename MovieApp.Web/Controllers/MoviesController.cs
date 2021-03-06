@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using MovieApp.Web.Data;
 using MovieApp.Web.Entity;
 using MovieApp.Web.Models;
@@ -14,7 +15,6 @@ namespace MovieApp.Web.Controllers
     public class MoviesController : Controller
     {
         private readonly MovieContext _context;
-
         public MoviesController(MovieContext context)
         {
             _context = context;
@@ -25,22 +25,23 @@ namespace MovieApp.Web.Controllers
         {
             return View();
         }
-       
+
         [HttpGet]
-        public IActionResult List(int? id,string q)
+        public IActionResult List(int? id, string q)
         {
-            //var movies = MovieRepository.Movies;
             var movies = _context.Movies.AsQueryable();
 
-            if (id!=null)
+            if (id != null)
             {
-                movies = movies.Where(m => m.GenreId == id);
+                movies = movies
+                    .Include(m => m.Genres)
+                    .Where(m => m.Genres.Any(g => g.GenreId == id));
             }
 
-            if(!string.IsNullOrEmpty(q))
+            if (!string.IsNullOrEmpty(q))
             {
-                movies = movies.Where(i => 
-                    i.Title.ToLower().Contains(q.ToLower()) || 
+                movies = movies.Where(i =>
+                    i.Title.ToLower().Contains(q.ToLower()) ||
                     i.Description.ToLower().Contains(q.ToLower()));
             }
 
@@ -48,7 +49,7 @@ namespace MovieApp.Web.Controllers
             {
                 Movies = movies.ToList()
             };
-            
+
             return View("Movies", model);
         }
         [HttpGet]
@@ -69,8 +70,6 @@ namespace MovieApp.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                //MovieRepository.Add(m);
-
                 _context.Movies.Add(m);
                 _context.SaveChanges();
 
@@ -78,7 +77,7 @@ namespace MovieApp.Web.Controllers
                 return RedirectToAction("List");
             }
             ViewBag.Genres = new SelectList(_context.Genres.ToList(), "GenreId", "Name");
-            return View();          
+            return View();
         }
 
         [HttpGet]
@@ -93,7 +92,6 @@ namespace MovieApp.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                //MovieRepository.Edit(m);
                 _context.Movies.Update(m);
                 _context.SaveChanges();
                 return RedirectToAction("Details", "Movies", new { @id = m.MovieId });
@@ -103,9 +101,8 @@ namespace MovieApp.Web.Controllers
         }
 
         [HttpPost]
-        public IActionResult Delete(int MovieId,string Title)
+        public IActionResult Delete(int MovieId, string Title)
         {
-            //MovieRepository.Delete(MovieId);
             var entity = _context.Movies.Find(MovieId);
             _context.Movies.Remove(entity);
             _context.SaveChanges();
